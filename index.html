@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon" href="https://drive.google.com/uc?export=view&id=1IH4lqQeAAU38jYwFYwUT03BeI8M89fHQ" type="image/x-icon">
+    <title>¡Minful!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+    <div id="app">
+        <h1>Análisis facial y ocular</h1>
+        <form id="image-form" method="POST" action="/predict" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="image" class="form-label">Seleccionar imagen:</label>
+                <input type="file" name="image" accept="image/*" @change="handleFileUpload" class="form-control" id="image">
+            </div>
+            <div class="mb-3">
+                <button type="button" @click="captureFromCamera" class="btn btn-primary">Capturar desde la cámara</button>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-center">
+
+            <div class="image-container">
+                <h2>Imagen de entrada:</h2>
+                <img :src="inputImage" alt="Imagen de entrada" class="img-fluid">
+            </div>
+
+            <div class="gif-container">
+                <img src="https://drive.google.com/uc?export=view&id=13cio73yoiuE4NSMxz-sQ4cf5oq7xdsSP" alt="Gif" class="gif-img">
+            </div>   
+            
+            <div class="image-container">
+                <h2>Imagen de salida: <span id="predicted-text"></span></h2>
+                <img v-if="outputImage" :src="outputImage" alt="Imagen de salida" class="img-fluid">
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            inputImage: null,
+            outputImage: '',
+        },
+        methods: {
+            captureFromCamera() {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        video.autoplay = true;
+
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+
+                        video.addEventListener('loadedmetadata', () => {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            this.inputImage = canvas.toDataURL('image/jpeg');
+
+                            // Convertir imagen a archivo para enviarlo al servidor
+                            this.convertBase64ToFile(this.inputImage, 'captured_image.jpg')
+                                .then(file => {
+                                    const formData = new FormData();
+                                    formData.append('image', file);
+                                    this.submitForm(formData);
+                                })
+                                .catch(error => {
+                                    console.error('Error al convertir imagen a archivo:', error);
+                                });
+
+                            video.srcObject.getTracks().forEach(track => track.stop());
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error al acceder a la cámara:', error);
+                    });
+            },
+            convertBase64ToFile(base64, filename) {
+                return fetch(base64)
+                    .then(response => response.blob())
+                    .then(blob => new File([blob], filename, { type: 'image/jpeg' }));
+            },
+            handleFileUpload(event) {
+                const input = event.target;
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.inputImage = e.target.result;
+
+                        const formData = new FormData();
+                        formData.append('image', input.files[0]);
+                        this.submitForm(formData);
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+            submitForm(formData) {
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.outputImage = "data:image/jpeg;base64," + data.output_img_base64;
+                    document.getElementById('predicted-text').textContent = data.predicted_text;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+    });
+</script>
+<style>
+.image-container img {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+}
+
+.gif-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 100px;
+        margin-right: 100px;
+}
+
+.gif-img {
+        width: 500px;
+        height: 500px;
+}
+
+</style>
