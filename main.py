@@ -11,7 +11,7 @@ import gdown
 
 app = Flask(__name__, template_folder=os.path.abspath(''))
 
-# Descargar el modelo previamente entrenado desde Google Drive
+# Descargar el modelo previamente entrenado desde Google 
 model_url = 'https://drive.google.com/uc?export=view&id=1LXiVwMHtRLkV8ZegBCcz1KDE4xlfIK8t'
 model_path = 'asd_best_model.h5'
 gdown.download(model_url, model_path, quiet=False)
