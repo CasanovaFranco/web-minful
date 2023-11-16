@@ -7,14 +7,23 @@ import tensorflow as tf
 import cv2
 import dlib
 import base64
+import gdown
 
 app = Flask(__name__, template_folder=os.path.abspath(''))
 
-# Se carga el modelo previamente entrenado desde el archivo H5
-model = tf.keras.models.load_model('C:/Users/ACER/Desktop/PRUEBA_TP2/asd_best_model.h5')
+# Load the previously trained model from the local filesystem
+model_path = os.path.join(os.getcwd(), 'asd_best_model.h5')
+model = tf.keras.models.load_model(model_path)
 
-# Se carga el detector de landmarks de dlib
-predictor = dlib.shape_predictor('C:/Users/ACER/Desktop/PRUEBA_TP2/shape_predictor_68_face_landmarks.dat')
+# Load the dlib landmarks detector from the local filesystem
+landmarks_path = os.path.join(os.getcwd(), 'shape_predictor_68_face_landmarks.dat')
+predictor = dlib.shape_predictor(landmarks_path)
+
+# Cargar el modelo previamente entrenado
+model = tf.keras.models.load_model(model_path)
+
+# Cargar el detector de landmarks de dlib
+predictor = dlib.shape_predictor(landmarks_path)
 
 @app.route('/')
 def index():
