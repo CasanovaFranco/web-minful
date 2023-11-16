@@ -68,7 +68,7 @@ def predict():
 
     return jsonify({'predicted_text': predicted_text, 'output_img_base64': output_img_base64})
 
-# Inicializar el detector de rostros de dli
+# Inicializar el detector de rostros de dlib
 detector = dlib.get_frontal_face_detector()
 
 if __name__ == '__main__':
